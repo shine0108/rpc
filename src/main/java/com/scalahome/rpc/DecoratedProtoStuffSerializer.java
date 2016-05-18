@@ -1,12 +1,16 @@
 package com.scalahome.rpc;
 
+import java.util.Observable;
+
 /**
  * Created by xufuqing on 16/5/18.
  */
 public class DecoratedProtoStuffSerializer extends ProtoStuffSerializer {
     @Override
     public <T> byte[] serialize(Class<T> clazz, T t) {
-        if (byte.class == clazz) {
+        if(byte[].class == clazz) {
+            return (byte[]) t;
+        } else if (byte.class == clazz) {
             return new byte[]{(Byte)t};
         } else if (short.class == clazz) {
             return IOUtils.shortToByteArray((Short) t);
@@ -31,7 +35,9 @@ public class DecoratedProtoStuffSerializer extends ProtoStuffSerializer {
 
     @Override
     public <T> T deSerialize(Class<T> clazz, byte[] data) throws ReflectiveOperationException {
-        if (byte.class == clazz) {
+        if(byte[].class == clazz) {
+            return (T) data;
+        } else if (byte.class == clazz) {
             return (T)(Byte)data[0];
         } else if (short.class == clazz) {
             return (T)(Short)IOUtils.byteArrayToShort(data, 0);
