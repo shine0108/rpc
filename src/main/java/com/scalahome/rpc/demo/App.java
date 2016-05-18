@@ -1,13 +1,9 @@
-package com.scalahome.rpc;
+package com.scalahome.rpc.demo;
 
-import net.sf.cglib.proxy.Enhancer;
-import net.sf.cglib.proxy.MethodInterceptor;
-import net.sf.cglib.proxy.MethodProxy;
+import com.scalahome.rpc.DefaultRPCBuilder;
+import com.scalahome.rpc.RPCBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 
 /**
  * Created by xufuqing on 16/5/16.

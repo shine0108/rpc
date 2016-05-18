@@ -1,4 +1,6 @@
-package com.scalahome.rpc;
+package com.scalahome.rpc.demo;
+
+import com.scalahome.rpc.Async;
 
 /**
  * Created by xufuqing on 16/5/18.

@@ -1,4 +1,4 @@
-package com.scalahome.rpc;
+package com.scalahome.rpc.demo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +18,6 @@ public class PersonImpl implements Person {
     @Override
     public String getName() {
         logger.info("get name");
-        return "name";
+        return "jack";
     }
 }
