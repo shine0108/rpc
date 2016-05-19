@@ -32,10 +32,7 @@ public class App {
         person.sendBean(bean);
         List<String> l = new ArrayList<String>();
         l.add("a");
-        person.sendList(l);
-        person.sendStr(new String[]{"a","b"});
-        person.sendInt(new int[]{2,3,4});
-        person.sendObj("yes here");
+        person.setAge(1, "nono");
     }
 
 

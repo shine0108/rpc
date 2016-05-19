@@ -19,7 +19,7 @@ public class DefaultRPCBuilder implements RPCBuilder {
         return CglibMethodInject.getInstance().getInstance(clazz, new DefaultMethodInterceptor(versionID, host, port, timeout));
     }
 
-    private Serializer serializer = new DecoratedProtoStuffSerializer();
+    private Serializer serializer = new ExtendedProtoStuffSerializer();
 
     @Override
     public <T> void startServer(final T t, final long versionID, String host, int port) throws InterruptedException {

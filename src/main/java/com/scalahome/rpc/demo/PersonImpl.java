@@ -12,44 +12,25 @@ public class PersonImpl implements Person {
 
     private Logger logger = LoggerFactory.getLogger(PersonImpl.class);
 
-    @Override
     public void setAge(int age, int value) {
-     logger.info("setAge:" + age + "," + value);
+        logger.info("setAge:" + age + "," + value);
     }
 
-    @Override
+    public void setAge(int age, String value) {
+        logger.info("setAge2:" + age + "," + value);
+    }
+
     public String getName() {
         logger.info("get name");
         return "jack";
     }
 
-    @Override
     public void sendData(byte[] data) {
         logger.info(new String(data));
     }
 
-    @Override
-    public void sendObj(Object obj) {
-        logger.info("obj:" + obj.toString());
-    }
-
-    @Override
-    public void sendInt(int[] ints) {
-        logger.info("ints:" + ints.length);
-    }
-
-    @Override
-    public void sendBean(Bean bean) {
+    public void sendBean(Person.Bean bean) {
         logger.info("bean:" + bean.toString());
     }
 
-    @Override
-    public void sendStr(String[] args) {
-        logger.info("args:" + args.length);
-    }
-
-    @Override
-    public void sendList(List<String> list) {
-        logger.info(list.toString());
-    }
 }

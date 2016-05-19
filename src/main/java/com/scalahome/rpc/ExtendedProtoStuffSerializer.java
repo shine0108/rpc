@@ -1,11 +1,9 @@
 package com.scalahome.rpc;
 
-import java.util.Observable;
-
 /**
  * Created by xufuqing on 16/5/18.
  */
-public class DecoratedProtoStuffSerializer extends ProtoStuffSerializer {
+public class ExtendedProtoStuffSerializer extends ProtoStuffSerializer {
     @Override
     public <T> byte[] serialize(Class<T> clazz, T t) {
         if(byte[].class == clazz) {

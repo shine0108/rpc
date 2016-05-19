@@ -26,7 +26,7 @@ public class DefaultMethodInterceptor implements MethodInterceptor {
         this.timeout = timeout;
     }
 
-    private Serializer serializer = new DecoratedProtoStuffSerializer();
+    private Serializer serializer = new ExtendedProtoStuffSerializer();
 
     @Override
     public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
