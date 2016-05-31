@@ -12,6 +12,8 @@ import java.lang.reflect.Method;
  */
 public class DefaultMethodInterceptor implements MethodInterceptor {
 
+    private final String host;
+    private final int port;
     private Logger logger = LoggerFactory.getLogger(DefaultMethodInterceptor.class);
 
     private final long versionID;
@@ -19,11 +21,12 @@ public class DefaultMethodInterceptor implements MethodInterceptor {
 
     private TCPClient tcpClient;
 
-    public DefaultMethodInterceptor(long versionID, String host, int port, long timeout) throws InterruptedException {
+    public DefaultMethodInterceptor(long versionID, String host, int port, long timeout) {
         this.versionID = versionID;
         tcpClient = new NettyClient();
-        tcpClient.connect(host, port);
         this.timeout = timeout;
+        this.host = host;
+        this.port = port;
     }
 
     private Serializer serializer = new ExtendedProtoStuffSerializer();
@@ -58,6 +61,7 @@ public class DefaultMethodInterceptor implements MethodInterceptor {
             }
             System.arraycopy(params[i], 0, data, 8 + 1 + 1 + 4 + methodName.length + params.length + offset, params[i].length);
         }
+        tcpClient.connect(host, port);
         Async async = method.getAnnotation(Async.class);
         if (void.class == method.getReturnType() && async != null) {
             tcpClient.sendAsync(data);

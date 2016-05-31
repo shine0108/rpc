@@ -43,6 +43,7 @@ public class NettyServer implements TCPServer {
         serverBootstrap.bind(host, port).sync();
     }
 
+
     @Override
     public void setOnReceiveListener(OnReceiveListener onReceiveListener) {
         this.onReceiveListener = onReceiveListener;

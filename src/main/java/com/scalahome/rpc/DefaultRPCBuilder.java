@@ -27,7 +27,6 @@ public class DefaultRPCBuilder implements RPCBuilder {
         tcpServer.setOnReceiveListener(new TCPServer.OnReceiveListener() {
             @Override
             public byte[] onReceive(byte[] data) {
-                logger.info("data len:" + data.length);
                 long clientVersionId = IOUtils.byteArrayToLong(data, 0);
                 if (clientVersionId != versionID) {
                     logger.error("Version Diff, Server:" + versionID + ", Client:" + clientVersionId);

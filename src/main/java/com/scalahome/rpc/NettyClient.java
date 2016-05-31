@@ -29,22 +29,28 @@ public class NettyClient implements TCPClient {
 
     @Override
     public void connect(String host, int port) throws InterruptedException {
-        Bootstrap bootstrap = new Bootstrap();
-        bootstrap.group(new NioEventLoopGroup());
-        bootstrap.channel(NioSocketChannel.class);
-        bootstrap.handler(new ChannelInitializer<SocketChannel>() {
-            @Override
-            protected void initChannel(SocketChannel ch) throws Exception {
-                ChannelPipeline pipeline = ch.pipeline();
-                pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
-                pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
-                pipeline.addLast("decoder", new ByteArrayDecoder());
-                pipeline.addLast("encoder", new ByteArrayEncoder());
-                pipeline.addLast(new TcpClientHandler());
+        if (channel == null) {
+            synchronized (this) {
+                if (channel == null) {
+                    Bootstrap bootstrap = new Bootstrap();
+                    bootstrap.group(new NioEventLoopGroup());
+                    bootstrap.channel(NioSocketChannel.class);
+                    bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ChannelPipeline pipeline = ch.pipeline();
+                            pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
+                            pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
+                            pipeline.addLast("decoder", new ByteArrayDecoder());
+                            pipeline.addLast("encoder", new ByteArrayEncoder());
+                            pipeline.addLast(new TcpClientHandler());
+                        }
+                    });
+                    bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
+                    channel = bootstrap.connect(host, port).sync().channel();
+                }
             }
-        });
-        bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-        channel = bootstrap.connect(host, port).sync().channel();
+        }
     }
 
     @Override
@@ -78,7 +84,7 @@ public class NettyClient implements TCPClient {
                 wrappedAck = waitAck.remove(uuid);
             }
         }
-        if(wrappedAck.responseCode == 0) {
+        if (wrappedAck.responseCode == 0) {
             return wrappedAck.ack;
         } else {
             throw new RemoteException("Error With ResponseCode:" + wrappedAck.responseCode);
@@ -89,12 +95,12 @@ public class NettyClient implements TCPClient {
 
         @Override
         protected void channelRead0(ChannelHandlerContext channelHandlerContext, byte[] data) throws Exception {
-            if(data != null && data.length >= 17) {
+            if (data != null && data.length >= 17) {
                 UUID uuid = new UUID(IOUtils.byteArrayToLong(data, 0), IOUtils.byteArrayToLong(data, 8));
                 WrappedAck wrappedAck = waitAck.get(uuid);
-                if(wrappedAck != null) {
+                if (wrappedAck != null) {
                     wrappedAck.responseCode = data[16];
-                    wrappedAck.ack = new byte[data.length - 16 -1];
+                    wrappedAck.ack = new byte[data.length - 16 - 1];
                     System.arraycopy(data, 16 + 1, wrappedAck.ack, 0, data.length - 16 - 1);
                     synchronized (wrappedAck.uuid) {
                         wrappedAck.uuid.notifyAll();
@@ -108,6 +114,7 @@ public class NettyClient implements TCPClient {
         WrappedAck(UUID uuid) {
             this.uuid = uuid;
         }
+
         UUID uuid;
         byte[] ack;
         byte responseCode;
