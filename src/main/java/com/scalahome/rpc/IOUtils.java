@@ -1,7 +1,6 @@
 package com.scalahome.rpc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -12,7 +11,7 @@ import java.io.PrintWriter;
  */
 public class IOUtils {
 
-    private static Logger logger = LoggerFactory.getLogger(IOUtils.class);
+    private static Logger logger = Logger.getLogger(IOUtils.class);
 
     public static String getStackTrace(Throwable e) {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();

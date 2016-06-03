@@ -6,6 +6,7 @@ package com.scalahome.rpc;
 public interface TCPServer {
     void start(String host, int port) throws InterruptedException;
     void setOnReceiveListener(OnReceiveListener onReceiveListener);
+    void stop();
 
     interface OnReceiveListener {
         byte[] onReceive(byte[] data);

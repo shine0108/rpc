@@ -1,7 +1,6 @@
 package com.scalahome.rpc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -12,24 +11,25 @@ import java.util.Arrays;
  */
 public class DefaultRPCBuilder implements RPCBuilder {
 
-    private Logger logger = LoggerFactory.getLogger(DefaultRPCBuilder.class);
+    private Logger logger = Logger.getLogger(DefaultRPCBuilder.class);
 
     @Override
-    public <T> T getProxy(Class<T> clazz, long versionID, String host, int port, long timeout) throws InterruptedException {
+    public <T> T getProxy(Class<T> clazz, long versionID, String host, int port, long timeout) {
         return CglibMethodInject.getInstance().getInstance(clazz, new DefaultMethodInterceptor(versionID, host, port, timeout));
     }
 
     private Serializer serializer = new ExtendedProtoStuffSerializer();
 
+
     @Override
-    public <T> void startServer(final T t, final long versionID, String host, int port) throws InterruptedException {
+    public <T extends VersionedProtocol> TCPServer startServer(final T t, String host, int port) throws InterruptedException {
         TCPServer tcpServer = new NettyServer();
         tcpServer.setOnReceiveListener(new TCPServer.OnReceiveListener() {
             @Override
             public byte[] onReceive(byte[] data) {
                 long clientVersionId = IOUtils.byteArrayToLong(data, 0);
-                if (clientVersionId != versionID) {
-                    logger.error("Version Diff, Server:" + versionID + ", Client:" + clientVersionId);
+                if (clientVersionId != t.getVersionID()) {
+                    logger.error("Version Diff, Server:" + t.getVersionID() + ", Client:" + clientVersionId);
                     return null;
                 }
                 byte methodNameLength = data[8];
@@ -88,5 +88,6 @@ public class DefaultRPCBuilder implements RPCBuilder {
             }
         });
         tcpServer.start(host, port);
+        return tcpServer;
     }
 }

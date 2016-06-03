@@ -2,8 +2,7 @@ package com.scalahome.rpc;
 
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.lang.reflect.Method;
 
@@ -14,7 +13,7 @@ public class DefaultMethodInterceptor implements MethodInterceptor {
 
     private final String host;
     private final int port;
-    private Logger logger = LoggerFactory.getLogger(DefaultMethodInterceptor.class);
+    private Logger logger = Logger.getLogger(DefaultMethodInterceptor.class);
 
     private final long versionID;
     private final long timeout;
@@ -78,5 +77,10 @@ public class DefaultMethodInterceptor implements MethodInterceptor {
                 }
             }
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        tcpClient.close();
     }
 }

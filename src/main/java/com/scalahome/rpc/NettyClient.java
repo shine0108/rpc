@@ -10,12 +10,12 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -23,16 +23,17 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class NettyClient implements TCPClient {
 
-    private Logger logger = LoggerFactory.getLogger(NettyClient.class);
+    private Logger logger = Logger.getLogger(NettyClient.class);
 
     private Channel channel;
+    private Bootstrap bootstrap;
 
     @Override
     public void connect(String host, int port) throws InterruptedException {
         if (channel == null) {
             synchronized (this) {
                 if (channel == null) {
-                    Bootstrap bootstrap = new Bootstrap();
+                    bootstrap = new Bootstrap();
                     bootstrap.group(new NioEventLoopGroup());
                     bootstrap.channel(NioSocketChannel.class);
                     bootstrap.handler(new ChannelInitializer<SocketChannel>() {
@@ -51,6 +52,18 @@ public class NettyClient implements TCPClient {
                 }
             }
         }
+    }
+
+    @Override
+    public void close() {
+        if(channel != null) {
+            channel.close().awaitUninterruptibly(10, TimeUnit.SECONDS);
+            channel = null;
+        }
+        if (bootstrap != null && bootstrap.group() != null) {
+            bootstrap.group().shutdownGracefully();
+        }
+        bootstrap = null;
     }
 
     @Override

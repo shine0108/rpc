@@ -5,6 +5,7 @@ package com.scalahome.rpc;
  */
 public interface TCPClient {
     void connect(String host, int port) throws InterruptedException;
+    void close();
     void sendAsync(byte[] data);
     byte[] sendSync(byte[] data, long timeout) throws InterruptedException, RemoteException;
 }

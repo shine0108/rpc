@@ -10,8 +10,9 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
+
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -19,13 +20,19 @@ import org.slf4j.LoggerFactory;
  */
 public class NettyServer implements TCPServer {
 
-    private Logger logger = LoggerFactory.getLogger(NettyServer.class);
+    private Logger logger = Logger.getLogger(NettyServer.class);
 
     private OnReceiveListener onReceiveListener;
 
+    private ChannelFuture channelFuture;
+
+    private ServerBootstrap serverBootstrap;
+
     @Override
-    public void start(String host, int port) throws InterruptedException {
-        ServerBootstrap serverBootstrap = new ServerBootstrap();
+    public synchronized void start(String host, int port) throws InterruptedException {
+        if(channelFuture != null || serverBootstrap != null)
+            throw new RuntimeException("Server Has Started, Stop First!");
+        serverBootstrap = new ServerBootstrap();
         serverBootstrap.group(new NioEventLoopGroup(Runtime.getRuntime().availableProcessors()),
                 new NioEventLoopGroup(Runtime.getRuntime().availableProcessors()));
         serverBootstrap.channel(NioServerSocketChannel.class);
@@ -40,13 +47,29 @@ public class NettyServer implements TCPServer {
                 pipeline.addLast(new TcpServerHandler(NettyServer.this));
             }
         });
-        serverBootstrap.bind(host, port).sync();
+        channelFuture = serverBootstrap.bind(host, port);
+        channelFuture.syncUninterruptibly();
     }
 
 
     @Override
     public void setOnReceiveListener(OnReceiveListener onReceiveListener) {
         this.onReceiveListener = onReceiveListener;
+    }
+
+    @Override
+    public synchronized void stop() {
+        if(channelFuture != null) {
+            channelFuture.channel().close().awaitUninterruptibly(10, TimeUnit.SECONDS);
+            channelFuture = null;
+        }
+        if (serverBootstrap != null && serverBootstrap.group() != null) {
+            serverBootstrap.group().shutdownGracefully();
+        }
+        if (serverBootstrap != null && serverBootstrap.childGroup() != null) {
+            serverBootstrap.childGroup().shutdownGracefully();
+        }
+        serverBootstrap = null;
     }
 
     private class TcpServerHandler extends SimpleChannelInboundHandler<byte[]> {
