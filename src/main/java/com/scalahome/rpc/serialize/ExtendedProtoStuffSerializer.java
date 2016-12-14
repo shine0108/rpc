@@ -1,4 +1,6 @@
-package com.scalahome.rpc;
+package com.scalahome.rpc.serialize;
+
+import com.scalahome.rpc.utils.IOUtils;
 
 /**
  * Created by xufuqing on 16/5/18.
@@ -32,7 +34,7 @@ public class ExtendedProtoStuffSerializer extends ProtoStuffSerializer {
     }
 
     @Override
-    public <T> T deSerialize(Class<T> clazz, byte[] data) throws ReflectiveOperationException {
+    public <T> T deSerialize(Class<T> clazz, byte[] data) throws InstantiationException, IllegalAccessException {
         if(byte[].class == clazz) {
             return (T) data;
         } else if (byte.class == clazz) {

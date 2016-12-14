@@ -1,4 +1,4 @@
-package com.scalahome.rpc;
+package com.scalahome.rpc.serialize;
 
 import com.dyuproject.protostuff.LinkedBuffer;
 import com.dyuproject.protostuff.ProtostuffIOUtil;
@@ -8,7 +8,7 @@ import com.dyuproject.protostuff.runtime.RuntimeSchema;
 /**
  * Created by xufuqing on 16/5/16.
  */
-public class ProtoStuffSerializer implements Serializer {
+public class ProtoStuffSerializer implements RPCSerializer {
 
     @Override
     public <T> byte[] serialize(Class<T> clazz, T t) {
@@ -18,7 +18,7 @@ public class ProtoStuffSerializer implements Serializer {
     }
 
     @Override
-    public <T> T deSerialize(Class<T> clazz, byte[] data) throws ReflectiveOperationException {
+    public <T> T deSerialize(Class<T> clazz, byte[] data) throws IllegalAccessException, InstantiationException {
         T t = clazz.newInstance();
         Schema<T> schema = RuntimeSchema.getSchema(clazz);
         ProtostuffIOUtil.mergeFrom(data, t, schema);

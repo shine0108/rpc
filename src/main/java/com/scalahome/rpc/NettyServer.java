@@ -1,8 +1,15 @@
 package com.scalahome.rpc;
 
-
+import com.scalahome.rpc.Message;
+import com.scalahome.rpc.OnReceiveListener;
+import com.scalahome.rpc.RPCFactory;
+import com.scalahome.rpc.Server;
+import com.scalahome.rpc.serialize.RPCSerializer;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -12,92 +19,61 @@ import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import org.apache.log4j.Logger;
 
-import java.util.concurrent.TimeUnit;
-
-
 /**
- * Created by xufuqing on 16/5/16.
+ * Created by fuqing.xfq on 2016/12/5.
  */
-public class NettyServer implements TCPServer {
+public class NettyServer implements Server {
+
+    private String host;
+    private int port;
+
+    private EventLoopGroup bossGroup = new NioEventLoopGroup();
+    private EventLoopGroup workerGroup = new NioEventLoopGroup();
 
     private Logger logger = Logger.getLogger(NettyServer.class);
-
-    private OnReceiveListener onReceiveListener;
-
-    private ChannelFuture channelFuture;
-
-    private ServerBootstrap serverBootstrap;
+    private OnReceiveListener listener;
 
     @Override
-    public synchronized void start(String host, int port) throws InterruptedException {
-        if(channelFuture != null || serverBootstrap != null)
-            throw new RuntimeException("Server Has Started, Stop First!");
-        serverBootstrap = new ServerBootstrap();
-        serverBootstrap.group(new NioEventLoopGroup(Runtime.getRuntime().availableProcessors()),
-                new NioEventLoopGroup(Runtime.getRuntime().availableProcessors()));
-        serverBootstrap.channel(NioServerSocketChannel.class);
-        serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
-            @Override
-            protected void initChannel(SocketChannel ch) throws Exception {
-                ChannelPipeline pipeline = ch.pipeline();
-                pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
-                pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
-                pipeline.addLast("decoder", new ByteArrayDecoder());
-                pipeline.addLast("encoder", new ByteArrayEncoder());
-                pipeline.addLast(new TcpServerHandler(NettyServer.this));
-            }
-        });
-        channelFuture = serverBootstrap.bind(host, port);
-        channelFuture.syncUninterruptibly();
-    }
-
-
-    @Override
-    public void setOnReceiveListener(OnReceiveListener onReceiveListener) {
-        this.onReceiveListener = onReceiveListener;
+    public void start(String host, int port) throws InterruptedException {
+        this.host = host;
+        this.port = port;
+        ServerBootstrap bootstrap = new ServerBootstrap();
+        bootstrap.group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        socketChannel.pipeline()
+                                .addLast("FrameDecoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4))
+                                .addLast("FrameEncoder", new LengthFieldPrepender(4))
+                                .addLast("decoder", new ByteArrayDecoder())
+                                .addLast("encoder", new ByteArrayEncoder())
+                                .addLast(new ServerHandler());
+                    }
+                });
+        bootstrap.bind(host, port).sync();
+        logger.info("Server Bind Success, host:" + host + ",port:" + port);
     }
 
     @Override
-    public synchronized void stop() {
-        if(channelFuture != null) {
-            channelFuture.channel().close().awaitUninterruptibly(10, TimeUnit.SECONDS);
-            channelFuture = null;
-        }
-        if (serverBootstrap != null && serverBootstrap.group() != null) {
-            serverBootstrap.group().shutdownGracefully();
-        }
-        if (serverBootstrap != null && serverBootstrap.childGroup() != null) {
-            serverBootstrap.childGroup().shutdownGracefully();
-        }
-        serverBootstrap = null;
+    public void shutdown() {
+        workerGroup.shutdownGracefully();
+        bossGroup.shutdownGracefully();
     }
 
-    private class TcpServerHandler extends SimpleChannelInboundHandler<byte[]> {
+    @Override
+    public void setOnReceiveListener(OnReceiveListener listener) {
+        this.listener = listener;
+    }
 
-        private final NettyServer nettyServer;
-
-        private TcpServerHandler(NettyServer nettyServer) {
-            this.nettyServer = nettyServer;
-        }
+    class ServerHandler extends SimpleChannelInboundHandler<byte[]> {
 
         @Override
-        protected void channelRead0(ChannelHandlerContext channelHandlerContext, byte[] data) throws Exception {
-            if (data[0] == 0) {
-                byte[] realData = new byte[data.length - 1];
-                System.arraycopy(data, 1, realData, 0, realData.length);
-                nettyServer.onReceiveListener.onReceive(realData);
-            } else if (data[0] == 1) {
-                byte[] realData = new byte[data.length - 1 - 16];
-                System.arraycopy(data, 1 + 16, realData, 0, realData.length);
-                byte[] ack = nettyServer.onReceiveListener.onReceive(realData);
-                byte[] wrappedAck = new byte[(ack == null ? 0 : ack.length) + 16 + 1];
-                System.arraycopy(data, 1, wrappedAck, 0, 16);
-                if (ack == null) {
-                    wrappedAck[16] = 1;
-                } else {
-                    System.arraycopy(ack, 0, wrappedAck, 17, ack.length);
-                }
-                channelHandlerContext.channel().writeAndFlush(wrappedAck).sync();
+        protected void channelRead0(ChannelHandlerContext ctx, byte[] msg) throws Exception {
+            if(listener != null) {
+                RPCSerializer serializer = RPCFactory.getInstance().getSerializer();
+                Message message = serializer.deSerialize(Message.class, msg);
+                listener.onReceive(ctx, message);
             }
         }
     }
