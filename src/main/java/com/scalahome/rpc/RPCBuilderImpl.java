@@ -1,5 +1,6 @@
 package com.scalahome.rpc;
 
+import com.scalahome.rpc.serialize.RPCSerializer;
 import com.scalahome.rpc.utils.IOUtils;
 import io.netty.channel.ChannelHandlerContext;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -43,8 +44,10 @@ public class RPCBuilderImpl implements RPCBuilder {
                     }
                     if(returnMessage == null) {
                         throw new TimeoutException("TimeOut:" + timeout);
-                    } else {
+                    } else if(returnMessage.responseCode == 1) {
                         return returnMessage.returnValue;
+                    } else {
+                        throw new RemoteException("Response Error, Response Code:" + returnMessage.responseCode);
                     }
                 }
                 return null;
@@ -95,6 +98,7 @@ public class RPCBuilderImpl implements RPCBuilder {
                         Method method = t.getClass().getMethod(message.methodName, message.parameterTypes);
                         Object returnValue = method.invoke(t, message.args);
                         message.returnValue = returnValue;
+                        message.responseCode = 1;
                     } catch (NoSuchMethodException e) {
                         logger.warn(IOUtils.getStackTrace(e));
                         message.responseCode = -2;
@@ -107,7 +111,9 @@ public class RPCBuilderImpl implements RPCBuilder {
                     }
                 }
                 if(message.requestCode == 1) {
-                    ctx.channel().write(message);
+                    RPCSerializer serializer = RPCFactory.getInstance().getSerializer();
+                    byte[] data = serializer.serialize(Message.class, message);
+                    ctx.channel().writeAndFlush(data);
                 }
             }
         });
