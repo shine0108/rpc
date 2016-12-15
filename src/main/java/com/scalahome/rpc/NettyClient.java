@@ -72,7 +72,11 @@ public class NettyClient implements Client {
         }
         RPCSerializer serializer = RPCFactory.getInstance().getSerializer();
         byte[] data = serializer.serialize(Message.class, message);
-        channel.writeAndFlush(data);
+        if(message.requestCode == 1) {
+            channel.writeAndFlush(data).sync();
+        } else {
+            channel.writeAndFlush(data);
+        }
     }
 
 }

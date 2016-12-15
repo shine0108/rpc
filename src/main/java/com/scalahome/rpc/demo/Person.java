@@ -9,5 +9,6 @@ import com.scalahome.rpc.VersionedProtocol;
 public interface Person extends VersionedProtocol{
     @Sync
     String getName();
+    @Sync
     void setName(String name);
 }
