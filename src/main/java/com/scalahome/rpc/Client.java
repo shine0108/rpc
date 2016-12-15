@@ -5,6 +5,6 @@ package com.scalahome.rpc;
  */
 public interface Client {
     void connect(String host, int port) throws InterruptedException;
-    void sendMsg(Message msg);
+    void sendMsg(Message msg) throws InterruptedException;
     void setOnReceiveListener(OnReceiveListener listener);
 }

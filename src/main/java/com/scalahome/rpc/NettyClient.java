@@ -9,6 +9,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
+import org.apache.log4j.Logger;
 
 /**
  * Created by fuqing.xfq on 2016/12/5.
@@ -18,6 +19,9 @@ public class NettyClient implements Client {
     private Bootstrap bootstrap;
     private OnReceiveListener listener;
     private Channel channel;
+    private Logger logger = Logger.getLogger(NettyClient.class);
+    private String host;
+    private int port;
 
     {
         EventLoopGroup group = new NioEventLoopGroup();
@@ -56,11 +60,16 @@ public class NettyClient implements Client {
 
     @Override
     public void connect(String host, int port) throws InterruptedException {
+        this.host = host;
+        this.port = port;
         this.channel =  bootstrap.connect(host, port).sync().channel();
     }
 
     @Override
-    public void sendMsg(Message message) {
+    public void sendMsg(Message message) throws InterruptedException {
+        if(!channel.isOpen() || !channel.isActive()) {
+            channel =  bootstrap.connect(host, port).sync().channel();
+        }
         RPCSerializer serializer = RPCFactory.getInstance().getSerializer();
         byte[] data = serializer.serialize(Message.class, message);
         channel.writeAndFlush(data);

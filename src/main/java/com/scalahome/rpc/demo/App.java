@@ -21,9 +21,9 @@ public class App {
         person.setName("tom");
         System.out.println(person.getName());
         server.shutdown();
-//        server = rpcBuilder.startServer(new PersonImpl(), "127.0.0.1", 9090);
-//        person.setName("jack");
-//        System.out.println(person.getName());
+        server = rpcBuilder.startServer(new PersonImpl(), "127.0.0.1", 9090);
+        person.setName("jack");
+        System.out.println(person.getName());
 
     }
 
