@@ -19,13 +19,18 @@ public class PersonImpl implements Person {
     @Override
     public void setName(String name) {
         this.name = name;
-        logger.info("name:" + name);
+//        logger.info("name:" + name);
+//        try {
+//            Thread.sleep(50);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override
     public void setAge(int age) {
         this.age = age;
-        logger.info("age:" + age);
+//        logger.info("age:" + age);
     }
 
     @Override

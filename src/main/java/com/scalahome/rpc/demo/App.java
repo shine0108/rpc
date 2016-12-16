@@ -17,35 +17,36 @@ public class App {
     private static Logger logger = Logger.getLogger(App.class);
 
     public static void main(String[] args) throws InterruptedException {
-        RPCBuilder rpcBuilder = RPCFactory.getInstance().getRpcBuilder();
+        final RPCBuilder rpcBuilder = RPCFactory.getInstance().getRpcBuilder();
         Server server = rpcBuilder.startServer(new PersonImpl(), "127.0.0.1", 9090);
+        Thread.sleep(1000);
+        for(int i = 0; i < 10; i++) {
+            new Thread(){
+                @Override
+                public void run() {
+                    Person person = rpcBuilder.getProxy(Person.class, 1, "127.0.0.1", 9090, 300);
+                    for(int i = 0; i < 10000; i++) {
+                        try {
+                            person.setName("tom_" + i);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
+                            break;
+                        }
 
-        new Thread(){
-            @Override
-            public void run() {
-                for (int i = 0; i < 10000; i++) {
-                    RPCBuilder rpcBuilder = RPCFactory.getInstance().getRpcBuilder();
-                    Person person = rpcBuilder.getProxy(Person.class, 1, "127.0.0.1", 9090, 100);
-                    person.setName("tom");
-                    logger.info(person.getName());
-                    logger.info(person.getName());
+//                    System.out.println(person.getName());
+                    }
+                    logger.info("over");
                 }
-            }
-        }.start();
+            }.start();
+        }
 
-        new Thread(){
-            @Override
-            public void run() {
-                for (int i = 0; i < 10000; i++) {
-                    RPCBuilder rpcBuilder = RPCFactory.getInstance().getRpcBuilder();
-                    Person person = rpcBuilder.getProxy(Person.class, 1, "127.0.0.1", 9090, 100);
-                    person.setAge(26);
-                    logger.info(person.getAge());
-                    logger.info(person.getAge());
-                    logger.info(person.getName());
-                }
-            }
-        }.start();
+
+
 
 
     }
