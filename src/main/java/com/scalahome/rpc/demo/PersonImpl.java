@@ -9,6 +9,7 @@ public class PersonImpl implements Person {
 
     private Logger logger = Logger.getLogger(PersonImpl.class);
     private String name;
+    private int age;
 
     @Override
     public String getName() {
@@ -17,8 +18,19 @@ public class PersonImpl implements Person {
 
     @Override
     public void setName(String name) {
-        logger.info("name:" + name);
         this.name = name;
+        logger.info("name:" + name);
+    }
+
+    @Override
+    public void setAge(int age) {
+        this.age = age;
+        logger.info("age:" + age);
+    }
+
+    @Override
+    public int getAge() {
+        return age;
     }
 
     @Override

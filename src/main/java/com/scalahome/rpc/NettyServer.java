@@ -19,6 +19,8 @@ import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import org.apache.log4j.Logger;
 
+import java.net.InetSocketAddress;
+
 /**
  * Created by fuqing.xfq on 2016/12/5.
  */

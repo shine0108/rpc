@@ -5,6 +5,7 @@ import com.scalahome.rpc.RPCFactory;
 import com.scalahome.rpc.Server;
 import org.apache.log4j.Logger;
 
+import java.util.BitSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -16,44 +17,35 @@ public class App {
     private static Logger logger = Logger.getLogger(App.class);
 
     public static void main(String[] args) throws InterruptedException {
+        RPCBuilder rpcBuilder = RPCFactory.getInstance().getRpcBuilder();
+        Server server = rpcBuilder.startServer(new PersonImpl(), "127.0.0.1", 9090);
+
         new Thread(){
             @Override
             public void run() {
-                RPCBuilder rpcBuilder = RPCFactory.getInstance().getRpcBuilder();
-                try {
-                    Server server = rpcBuilder.startServer(new PersonImpl(), "127.0.0.1", 9090);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                for (int i = 0; i < 10000; i++) {
+                    RPCBuilder rpcBuilder = RPCFactory.getInstance().getRpcBuilder();
+                    Person person = rpcBuilder.getProxy(Person.class, 1, "127.0.0.1", 9090, 100);
+                    person.setName("tom");
+                    logger.info(person.getName());
+                    logger.info(person.getName());
                 }
             }
         }.start();
-        Thread.sleep(10);
-        for(int i = 0; i < 10; i++) {
-            new Thread(){
-                @Override
-                public void run() {
+
+        new Thread(){
+            @Override
+            public void run() {
+                for (int i = 0; i < 10000; i++) {
                     RPCBuilder rpcBuilder = RPCFactory.getInstance().getRpcBuilder();
                     Person person = rpcBuilder.getProxy(Person.class, 1, "127.0.0.1", 9090, 100);
-                    for(int i = 0; i < 10000; i++) {
-                        person.setName("jack" + i);
-                        System.out.println(person.getName());
-                    }
-                    System.out.println("finished");
+                    person.setAge(26);
+                    logger.info(person.getAge());
+                    logger.info(person.getAge());
+                    logger.info(person.getName());
                 }
-            }.start();
-            new Thread(){
-                @Override
-                public void run() {
-                    RPCBuilder rpcBuilder = RPCFactory.getInstance().getRpcBuilder();
-                    Person person = rpcBuilder.getProxy(Person.class, 1, "127.0.0.1", 9090, 100);
-                    for(int i = 0; i < 10000; i++) {
-                        person.setName("tom" + i);
-                        System.out.println(person.getName());
-                    }
-                    System.out.println("finished");
-                }
-            }.start();
-        }
+            }
+        }.start();
 
 
     }

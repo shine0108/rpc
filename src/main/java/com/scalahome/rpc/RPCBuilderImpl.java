@@ -1,5 +1,6 @@
 package com.scalahome.rpc;
 
+import com.scalahome.TimedHashMap;
 import com.scalahome.rpc.serialize.RPCSerializer;
 import com.scalahome.rpc.utils.IOUtils;
 import io.netty.channel.ChannelHandlerContext;
@@ -10,6 +11,7 @@ import org.apache.log4j.Logger;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
+import java.util.HashMap;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -21,11 +23,10 @@ public class RPCBuilderImpl implements RPCBuilder {
 
     @Override
     public <T> T getProxy(Class<T> clazz, final long versionID, final String host, final int port, final long timeout) {
-        MethodInterceptor interceptor = new MethodInterceptor() {
+        final MethodInterceptor interceptor = new MethodInterceptor() {
 
             @Override
             public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
-                returnMessage = null;
                 Message msg = new Message();
                 msg.versionId = versionID;
                 msg.methodName = method.getName();
@@ -37,11 +38,29 @@ public class RPCBuilderImpl implements RPCBuilder {
                 msg.args = objects;
                 Sync sync = method.getAnnotation(Sync.class);
                 msg.requestCode = sync == null ? 0 : 1;
-                client.sendMsg(msg);
-                if(sync != null) {
+                if(msg.requestCode == 0) {
+                    return intercept(msg, null);
+                } else {
+                    synchronized (method) {
+                        String key = getKey(msg);
+                        returnMessages.put(key, null);
+                        return intercept(msg, key);
+                    }
+                }
+            }
+
+            private Object intercept(Message msg, String key) throws InterruptedException, TimeoutException {
+                if(msg.requestCode != 0) {
+                    Object lock = locks.get(key);
+                    if(lock == null) {
+                        lock = new Object();
+                        locks.put(key, lock);
+                    }
+                    client.sendMsg(msg);
                     synchronized (lock) {
                         lock.wait(timeout);
                     }
+                    Message returnMessage = returnMessages.remove(key);
                     if(returnMessage == null) {
                         throw new TimeoutException("TimeOut:" + timeout);
                     } else if(returnMessage.responseCode == 1) {
@@ -49,13 +68,24 @@ public class RPCBuilderImpl implements RPCBuilder {
                     } else {
                         throw new RemoteException("Response Error, Response Code:" + returnMessage.responseCode);
                     }
+                } else {
+                    client.sendMsg(msg);
                 }
                 return null;
             }
 
-            private Object lock = new Object();
+            private HashMap<String, Object> locks = new HashMap<String, Object>();
 
-            private Message returnMessage;
+            private HashMap<String, Message> returnMessages = new TimedHashMap<String, Message>();
+
+            private String getKey(Message message) {
+                StringBuilder buffer = new StringBuilder();
+                buffer.append(message.methodName);
+                for(Class clazz : message.parameterTypes) {
+                    buffer.append(clazz.toString());
+                }
+                return buffer.toString();
+            }
 
             final Client client = RPCFactory.getInstance().getClient();
 
@@ -63,9 +93,12 @@ public class RPCBuilderImpl implements RPCBuilder {
                 client.setOnReceiveListener(new OnReceiveListener() {
                     @Override
                     public void onReceive(ChannelHandlerContext ctx, Message message) {
+                        String key = getKey(message);
+                        Object lock = locks.get(key);
                         synchronized (lock) {
-                            returnMessage = message;
+                            returnMessages.put(key, message);
                             lock.notifyAll();
+                            //TODO
                         }
                     }
                 });

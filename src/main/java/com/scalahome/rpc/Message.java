@@ -2,6 +2,8 @@ package com.scalahome.rpc;
 
 import com.alibaba.fastjson.JSON;
 
+import java.net.InetSocketAddress;
+
 /**
  * Created by fuqing.xfq on 2016/12/5.
  */
