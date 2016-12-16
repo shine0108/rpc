@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -28,6 +29,7 @@ public class RPCBuilderImpl implements RPCBuilder {
             @Override
             public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
                 Message msg = new Message();
+                msg.id = UUID.randomUUID().toString();
                 msg.versionId = versionID;
                 msg.methodName = method.getName();
                 msg.parameterTypes = method.getParameterTypes();
@@ -43,7 +45,6 @@ public class RPCBuilderImpl implements RPCBuilder {
                 } else {
                     synchronized (method) {
                         String key = getKey(msg);
-                        returnMessages.put(key, null);
                         return intercept(msg, key);
                     }
                 }
@@ -57,12 +58,10 @@ public class RPCBuilderImpl implements RPCBuilder {
                         locks.put(key, lock);
                     }
                     client.sendMsg(msg);
-                    //TODO
-                    logger.info("send:" + key);
                     synchronized (lock) {
                         lock.wait(timeout);
                     }
-                    Message returnMessage = returnMessages.remove(key);
+                    Message returnMessage = returnMessages.remove(key + msg.id);
                     if(returnMessage == null) {
                         throw new TimeoutException("TimeOut:" + timeout);
                     } else if(returnMessage.responseCode == 1) {
@@ -78,7 +77,7 @@ public class RPCBuilderImpl implements RPCBuilder {
 
             private HashMap<String, Object> locks = new HashMap<String, Object>();
 
-            private Map<String, Message> returnMessages = new HashMap<String, Message>();
+            private Map<String, Message> returnMessages = new TimedHashMap<String, Message>();
 
             final Client client = RPCFactory.getInstance().getClient();
 
@@ -88,10 +87,8 @@ public class RPCBuilderImpl implements RPCBuilder {
                     public void onReceive(ChannelHandlerContext ctx, Message message) {
                         String key = getKey(message);
                         Object lock = locks.get(key);
-                        //TODO
-                        logger.info("receive:" + key);
                         synchronized (lock) {
-                            returnMessages.put(key, message);
+                            returnMessages.put(key + message.id, message);
                             lock.notifyAll();
                         }
                     }
@@ -121,8 +118,6 @@ public class RPCBuilderImpl implements RPCBuilder {
                             + ", remove address:" + remoteAddress + ", request:" + message);
                     message.responseCode = -1;
                 } else {
-                    //TODO
-                    logger.info("server receive:" + getKey(message));
                     try {
                         Method method = t.getClass().getMethod(message.methodName, message.parameterTypes);
                         Object returnValue = method.invoke(t, message.args);
@@ -143,7 +138,6 @@ public class RPCBuilderImpl implements RPCBuilder {
                     RPCSerializer serializer = RPCFactory.getInstance().getSerializer();
                     byte[] data = serializer.serialize(Message.class, message);
                     ctx.channel().writeAndFlush(data);
-                    logger.info("server send:" + getKey(message));
                 }
             }
         });

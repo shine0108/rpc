@@ -11,6 +11,7 @@ public interface Person extends VersionedProtocol{
     String getName();
     @Sync
     void setName(String name);
+    @Sync
     void setAge(int age);
     @Sync
     int getAge();

@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
  * Created by fuqing.xfq on 2016/12/5.
  */
 public class Message {
+    public String id;
     public long versionId;
     public long requestCode;
     public long responseCode;
