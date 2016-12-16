@@ -1,9 +1,5 @@
 package com.scalahome.rpc;
 
-import com.scalahome.rpc.Message;
-import com.scalahome.rpc.OnReceiveListener;
-import com.scalahome.rpc.RPCFactory;
-import com.scalahome.rpc.Server;
 import com.scalahome.rpc.serialize.RPCSerializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelHandlerContext;
@@ -18,8 +14,6 @@ import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import org.apache.log4j.Logger;
-
-import java.net.InetSocketAddress;
 
 /**
  * Created by fuqing.xfq on 2016/12/5.

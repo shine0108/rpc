@@ -1,6 +1,5 @@
 package com.scalahome.rpc;
 
-import com.scalahome.rpc.Message;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
