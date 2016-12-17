@@ -1,6 +1,6 @@
 package com.scalahome.rpc.serialize;
 
-import com.scalahome.rpc.utils.IOUtils;
+import com.scalahome.utils.IOUtils;
 
 /**
  * Created by xufuqing on 16/5/18.

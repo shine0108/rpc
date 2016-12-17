@@ -1,4 +1,4 @@
-package com.scalahome.rpc.utils;
+package com.scalahome.utils;
 
 import org.apache.log4j.Logger;
 

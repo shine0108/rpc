@@ -1,7 +1,7 @@
 package com.scalahome.rpc;
 
 import com.scalahome.rpc.serialize.RPCSerializer;
-import com.scalahome.rpc.utils.IOUtils;
+import com.scalahome.utils.IOUtils;
 import io.netty.channel.ChannelHandlerContext;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -34,12 +34,14 @@ public class RPCBuilderImpl implements RPCBuilder {
                 msg.methodName = method.getName();
                 msg.parameterTypes = method.getParameterTypes();
                 msg.returnType = method.getReturnType();
+                msg.args = objects;
                 if(void.class == msg.returnType) {
                     msg.returnType = Void.class;
+                    Sync sync = method.getAnnotation(Sync.class);
+                    msg.requestCode = sync == null ? 0 : 1;
+                } else {
+                    msg.requestCode = 1;
                 }
-                msg.args = objects;
-                Sync sync = method.getAnnotation(Sync.class);
-                msg.requestCode = sync == null ? 0 : 1;
                 if(msg.requestCode == 0) {
                     return intercept(msg, null);
                 } else {

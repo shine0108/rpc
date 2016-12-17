@@ -6,6 +6,8 @@ import com.scalahome.rpc.Server;
 import org.apache.log4j.Logger;
 
 import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,6 +40,9 @@ public class App {
                             increase();
                             System.out.println(person.getAge());
                             increase();
+                            Map<String, String> msg = new HashMap<String, String>();
+                            msg.put("key", "value");
+                            person.setAttribute(msg);
                         } catch (Exception e) {
                             e.printStackTrace();
                             try {

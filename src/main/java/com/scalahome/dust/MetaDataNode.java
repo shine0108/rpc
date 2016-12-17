@@ -1,6 +1,6 @@
-package com.scalahome.ds;
+package com.scalahome.dust;
 
-import com.scalahome.rpc.tuple.Tuple_2;
+import com.scalahome.tuple.Tuple_2;
 
 import java.util.Set;
 
@@ -9,7 +9,9 @@ import java.util.Set;
  */
 public interface MetaDataNode {
     Tuple_2<String, String> getKeyRange();
+    void reportLocation(String key, String location, int targetReplication);
     Set<String> getLocations(String key);
     void addLocation(String key, String location);
     void removeLocation(String key, String location);
+    void removeKey(String key);
 }

@@ -2,6 +2,8 @@ package com.scalahome.rpc.demo;
 
 import org.apache.log4j.Logger;
 
+import java.util.Map;
+
 /**
  * Created by xufuqing on 16/5/31.
  */
@@ -41,6 +43,11 @@ public class PersonImpl implements Person {
     @Override
     public int getAge() {
         return age;
+    }
+
+    @Override
+    public void setAttribute(Map<String, String> msg) {
+        logger.info(msg);
     }
 
     @Override
