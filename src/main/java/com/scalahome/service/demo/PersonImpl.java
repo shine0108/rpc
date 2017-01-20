@@ -14,6 +14,11 @@ public class PersonImpl implements Person {
 
     @Override
     public String getName() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         System.out.println("get name:" + this.name);
         return name;
     }
